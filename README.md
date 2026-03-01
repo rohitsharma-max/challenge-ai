@@ -40,7 +40,7 @@ JWT_SECRET=your-super-secret-jwt-key-minimum-32-characters-long
 
 ### 3. Create database
 ```sql
--- In psql or pgAdmin:
+-- In psql or pgAdmin: 
 CREATE DATABASE daily_ai_challenge;
 ```
 
