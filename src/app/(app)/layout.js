@@ -77,6 +77,10 @@ export default function AppLayout({ children }) {
           <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
           <span className={styles.mobileNavLabel}>Theme</span>
         </button>
+         <button className={`${styles.mobileNavItem} ${styles.mobileNavLogout}`} onClick={handleLogout}>
+          <span>↩</span>
+          <span className={styles.mobileNavLabel}>Logout</span>
+        </button>
       </nav>
 
       {/* Main content */}

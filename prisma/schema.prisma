@@ -56,6 +56,7 @@ model UserChallenge {
   status            ChallengeStatus @default(pending)
   completedAt       DateTime?       @map("completed_at")
   proofImageUrl     String?         @map("proof_image_url")
+  proofText         String?         @map("proof_text")
   xpEarned          Int             @default(0) @map("xp_earned")
   createdAt         DateTime        @default(now()) @map("created_at")
 

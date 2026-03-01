@@ -154,6 +154,15 @@
   font-weight: 500;
 }
 
+.mobileNavLogout {
+  color: #ef4444;
+}
+
+.mobileNavLogout:hover {
+  color: #dc2626;
+  background: rgba(239, 68, 68, 0.1);
+}
+
 /* Main content */
 .main {
   flex: 1;

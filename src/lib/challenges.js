@@ -86,7 +86,7 @@ export async function assignDailyChallenge(userId, date) {
 /**
  * Complete today's challenge
  */
-export async function completeChallenge(userId, proofImageUrl = null) {
+export async function completeChallenge(userId, proofImageUrl = null, proofText = null) {
   const today = toDateOnly();
 
   const userChallenge = await prisma.userChallenge.findUnique({
@@ -102,7 +102,7 @@ export async function completeChallenge(userId, proofImageUrl = null) {
   const [, updatedUser] = await prisma.$transaction([
     prisma.userChallenge.update({
       where: { id: userChallenge.id },
-      data: { status: 'completed', completedAt: new Date(), proofImageUrl, xpEarned },
+      data: { status: 'completed', completedAt: new Date(), proofImageUrl, proofText, xpEarned },
     }),
     prisma.user.update({
       where: { id: userId },
@@ -278,6 +278,7 @@ function flattenUserChallenge(uc) {
     status: uc.status,
     completedAt: uc.completedAt,
     proofImageUrl: uc.proofImageUrl,
+    proofText: uc.proofText,
     xpEarned: uc.xpEarned,
     createdAt: uc.createdAt,
     title: uc.customTitle ?? uc.challenge?.title ?? 'Challenge',

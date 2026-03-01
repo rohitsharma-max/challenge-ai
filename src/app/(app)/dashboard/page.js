@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const [restoring, setRestoring] = useState(false);
   const [proofFile, setProofFile] = useState(null);
   const [proofPreview, setProofPreview] = useState(null);
+  const [proofText, setProofText] = useState('');
   const [showCelebration, setShowCelebration] = useState(false);
   const fileRef = useRef();
 
@@ -80,20 +81,20 @@ export default function DashboardPage() {
   };
 
   const handleComplete = async () => {
+    if (!proofText.trim()) {
+      toast.error('Please describe how you completed the challenge');
+      return;
+    }
+
     setCompleting(true);
     try {
       let res;
+      const formData = new FormData();
+      formData.append('proofText', proofText.trim());
       if (proofFile) {
-        const formData = new FormData();
         formData.append('proof', proofFile);
-        res = await fetch('/api/challenges/complete', { method: 'POST', body: formData });
-      } else {
-        res = await fetch('/api/challenges/complete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}),
-        });
       }
+      res = await fetch('/api/challenges/complete', { method: 'POST', body: formData });
 
       const result = await res.json();
       if (!res.ok) {
@@ -278,6 +279,14 @@ export default function DashboardPage() {
             <h3 className={styles.challengeName}>{todaysChallenge.title}</h3>
             <p className={styles.challengeDesc}>{todaysChallenge.description}</p>
 
+            {/* Show submitted proof when completed */}
+            {isCompleted && todaysChallenge.proofText && (
+              <div className={styles.proofSubmitted}>
+                <p className={styles.proofSubmittedLabel}>📝 Your proof:</p>
+                <p className={styles.proofSubmittedText}>{todaysChallenge.proofText}</p>
+              </div>
+            )}
+
             {/* Proof image if submitted */}
             {isCompleted && todaysChallenge.proof_image_url && (
               <div className={styles.proofImage}>
@@ -289,9 +298,25 @@ export default function DashboardPage() {
             {/* Action section */}
             {!isCompleted && (
               <div className={styles.actionSection}>
+                {/* Required proof text */}
+                <div className={styles.proofTextSection}>
+                  <label className={styles.proofTextLabel}>
+                    📝 How did you complete it? <span className={styles.requiredBadge}>Required</span>
+                  </label>
+                  <textarea
+                    className={styles.proofTextarea}
+                    placeholder="Describe what you did, how it went, any challenges you faced..."
+                    value={proofText}
+                    onChange={(e) => setProofText(e.target.value)}
+                    rows={3}
+                    maxLength={500}
+                  />
+                  <p className={styles.charCount}>{proofText.length}/500</p>
+                </div>
+
                 {/* Optional proof upload */}
                 <div className={styles.proofUpload}>
-                  <p className={styles.proofLabel2}>📸 Upload proof <span>(optional)</span></p>
+                  <p className={styles.proofLabel2}>📸 Upload photo <span>(optional)</span></p>
                   <div className={styles.proofArea} onClick={() => fileRef.current?.click()}>
                     {proofPreview ? (
                       <img src={proofPreview} alt="Preview" className={styles.proofPreview} />
@@ -323,7 +348,7 @@ export default function DashboardPage() {
                 <button
                   className={`btn btn-primary ${styles.completeBtn}`}
                   onClick={handleComplete}
-                  disabled={completing}
+                  disabled={completing || !proofText.trim()}
                 >
                   {completing
                     ? <><span className="spinner" style={{ width: 18, height: 18 }} /> Completing...</>

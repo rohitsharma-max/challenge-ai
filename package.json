@@ -26,7 +26,8 @@
     "canvas-confetti": "^1.9.3",
     "react-hot-toast": "^2.4.1",
     "date-fns": "^3.6.0",
-    "clsx": "^2.1.1"
+    "clsx": "^2.1.1",
+    "cloudinary": "^2.4.0"
   },
   "devDependencies": {
     "prisma": "^5.16.0",
