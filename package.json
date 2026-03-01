@@ -1,0 +1,36 @@
+{
+  "name": "daily-ai-challenge",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:migrate": "npx prisma migrate dev --name init",
+    "db:push": "npx prisma db push",
+    "db:seed": "npx prisma db seed",
+    "db:studio": "npx prisma studio",
+    "postinstall": "npx prisma generate"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "dependencies": {
+    "next": "14.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@prisma/client": "^5.16.0",
+    "bcryptjs": "^2.4.3",
+    "jose": "^5.6.3",
+    "canvas-confetti": "^1.9.3",
+    "react-hot-toast": "^2.4.1",
+    "date-fns": "^3.6.0",
+    "clsx": "^2.1.1"
+  },
+  "devDependencies": {
+    "prisma": "^5.16.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.5"
+  }
+}

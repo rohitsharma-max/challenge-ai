@@ -1,0 +1,57 @@
+/* src/app/(auth)/login/login.module.css */
+.title {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 15px;
+  margin-bottom: 32px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.submitBtn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 16px !important;
+  font-size: 16px !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.link {
+  color: var(--accent-light);
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.link:hover {
+  color: var(--accent-light);
+  text-decoration: underline;
+}
