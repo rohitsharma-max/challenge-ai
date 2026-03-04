@@ -1,7 +1,7 @@
 // src/app/(app)/profile/page.js
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format, parseISO } from 'date-fns';
 import toast from 'react-hot-toast';
 import { useTheme } from '@/components/providers/ThemeProvider';
@@ -26,7 +26,9 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [editForm, setEditForm] = useState({});
+  const avatarInputRef = useRef(null);
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
@@ -84,6 +86,40 @@ export default function ProfilePage() {
     }));
   };
 
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be under 5MB');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const res = await fetch('/api/profile/avatar', {
+        method: 'POST',
+        body: formData,
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to upload avatar');
+
+      setData(prev => ({
+        ...prev,
+        profile: { ...prev.profile, avatarUrl: json.avatarUrl },
+      }));
+      toast.success('Avatar updated');
+    } catch (err) {
+      toast.error(err.message || 'Failed to upload avatar');
+    } finally {
+      setUploadingAvatar(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = '';
+    }
+  };
+
   if (loading) {
     return (
       <div className={styles.loading}>
@@ -133,8 +169,33 @@ export default function ProfilePage() {
 
       {/* Avatar + name */}
       <div className={styles.profileCard}>
-        <div className={styles.avatar}>
-          {profile.name.charAt(0).toUpperCase()}
+        <div className={styles.avatarWrap}>
+          <div className={styles.avatar}>
+            {profile.avatarUrl ? (
+              <img src={profile.avatarUrl} alt={`${profile.name} avatar`} className={styles.avatarImage} />
+            ) : (
+              profile.name.charAt(0).toUpperCase()
+            )}
+          </div>
+          {editing && (
+            <>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleAvatarUpload}
+                style={{ display: 'none' }}
+              />
+              <button
+                type="button"
+                className={styles.avatarUploadBtn}
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={uploadingAvatar}
+              >
+                {uploadingAvatar ? 'Uploading...' : 'Change'}
+              </button>
+            </>
+          )}
         </div>
         {editing ? (
           <input

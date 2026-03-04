@@ -16,7 +16,7 @@ export async function GET(request) {
         id: true, name: true, email: true,
         currentStreak: true, bestStreak: true, totalXp: true,
         categories: true, difficulty: true, allowOutdoor: true,
-        theme: true, createdAt: true,
+        theme: true, createdAt: true, avatarUrl: true,
       },
     });
 
@@ -60,6 +60,7 @@ export async function PATCH(request) {
     if (validDifficulties.includes(body.difficulty)) data.difficulty = body.difficulty;
     if (typeof body.allowOutdoor === 'boolean') data.allowOutdoor = body.allowOutdoor;
     else if (typeof body.allow_outdoor === 'boolean') data.allowOutdoor = body.allow_outdoor;
+    if (typeof body.avatarUrl === 'string' || body.avatarUrl === null) data.avatarUrl = body.avatarUrl;
 
     if (!Object.keys(data).length)
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });

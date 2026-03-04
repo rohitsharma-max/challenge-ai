@@ -18,6 +18,7 @@ model User {
   resetPasswordOtpHash       String?    @map("reset_password_otp_hash")
   resetPasswordOtpExpiresAt  DateTime?  @map("reset_password_otp_expires_at")
   resetPasswordOtpRequestedAt DateTime? @map("reset_password_otp_requested_at")
+  avatarUrl          String?    @map("avatar_url")
   passwordHash       String     @map("password_hash")
   onboardingComplete Boolean    @default(false) @map("onboarding_complete")
   categories         String[]   @default([])
