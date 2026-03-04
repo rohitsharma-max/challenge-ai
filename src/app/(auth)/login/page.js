@@ -26,6 +26,11 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
+        if (data.requiresVerification && data.email) {
+          toast.error(data.error || 'Please verify your email first.');
+          router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
+          return;
+        }
         toast.error(data.error || 'Login failed');
         return;
       }
@@ -74,6 +79,9 @@ export default function LoginPage() {
             required
             minLength={8}
           />
+          <div style={{ textAlign: 'right' }}>
+            <Link href="/forgot-password" className={styles.link}>Forgot password?</Link>
+          </div>
         </div>
 
         <button

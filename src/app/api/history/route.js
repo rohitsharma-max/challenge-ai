@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import { getChallengeHistory } from '@/lib/challenges';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
     const authUser = await getUserFromRequest(request);

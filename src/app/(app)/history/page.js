@@ -98,9 +98,9 @@ export default function HistoryPage() {
             const catEmoji = CAT_EMOJIS[item.category] || '🎯';
             let dateStr = '';
             try {
-              dateStr = format(parseISO(item.challenge_date), 'MMM d, yyyy');
+              dateStr = format(parseISO(item.challengeDate), 'MMM d, yyyy');
             } catch {
-              dateStr = item.challenge_date;
+              dateStr = item.challengeDate;
             }
 
             return (
@@ -145,23 +145,23 @@ export default function HistoryPage() {
                 </div>
 
                 <div className={styles.itemXP}>
-                  {item.xp_earned > 0 && (
+                  {item.xpEarned > 0 && (
                     <>
-                      <span className={styles.xpAmount}>+{item.xp_earned}</span>
+                      <span className={styles.xpAmount}>+{item.xpEarned}</span>
                       <span className={styles.xpLabel}>XP</span>
                     </>
                   )}
                 </div>
 
-                {item.proof_image_url && (
+                {item.proofImageUrl && (
                   <a
-                    href={item.proof_image_url}
+                    href={item.proofImageUrl}
                     target="_blank"
                     rel="noreferrer"
                     className={styles.proofThumb}
                     title="View proof"
                   >
-                    <img src={item.proof_image_url} alt="Proof" />
+                    <img src={item.proofImageUrl} alt="Proof" />
                   </a>
                 )}
               </div>

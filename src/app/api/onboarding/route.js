@@ -36,6 +36,7 @@ export async function POST(request) {
       email: user.email,
       name: user.name,
       onboardingComplete: true,
+      emailVerified: authUser.emailVerified !== false,
     });
 
     const response = NextResponse.json({ success: true });

@@ -95,7 +95,9 @@ export async function completeChallenge(userId, proofImageUrl = null, proofText 
   });
 
   if (!userChallenge) throw new Error('No challenge found for today');
-  if (userChallenge.status === 'completed') throw new Error('Challenge already completed today');
+  if (userChallenge.status === 'completed' || userChallenge.status === 'restored') {
+    throw new Error('Challenge already completed today');
+  }
 
   const xpEarned = userChallenge.challenge?.xpReward ?? XP_REWARDS[userChallenge.challenge?.difficulty ?? 'medium'];
 
@@ -134,10 +136,12 @@ export async function checkAndUpdateStreak(userId) {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { currentStreak: true },
+    select: { currentStreak: true, createdAt: true },
   });
 
   if (!user || user.currentStreak === 0) return;
+  const userCreatedAt = toDateOnly(user.createdAt);
+  if (userCreatedAt >= yesterday) return;
 
   const yesterdayChallenge = await prisma.userChallenge.findUnique({
     where: { userId_challengeDate: { userId, challengeDate: yesterday } },

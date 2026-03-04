@@ -11,6 +11,13 @@ model User {
   id                 String     @id @default(uuid())
   name               String
   email              String     @unique
+  emailVerified      Boolean    @default(true) @map("email_verified")
+  emailOtpHash       String?    @map("email_otp_hash")
+  emailOtpExpiresAt  DateTime?  @map("email_otp_expires_at")
+  emailOtpRequestedAt DateTime? @map("email_otp_requested_at")
+  resetPasswordOtpHash       String?    @map("reset_password_otp_hash")
+  resetPasswordOtpExpiresAt  DateTime?  @map("reset_password_otp_expires_at")
+  resetPasswordOtpRequestedAt DateTime? @map("reset_password_otp_requested_at")
   passwordHash       String     @map("password_hash")
   onboardingComplete Boolean    @default(false) @map("onboarding_complete")
   categories         String[]   @default([])

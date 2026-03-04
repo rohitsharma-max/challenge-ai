@@ -56,10 +56,17 @@ export default function DashboardPage() {
       toast.error('Image must be under 5MB');
       return;
     }
+    if (proofPreview) URL.revokeObjectURL(proofPreview);
     setProofFile(file);
     const url = URL.createObjectURL(file);
     setProofPreview(url);
   };
+
+  useEffect(() => {
+    return () => {
+      if (proofPreview) URL.revokeObjectURL(proofPreview);
+    };
+  }, [proofPreview]);
 
   const fireConfetti = () => {
     const count = 200;
@@ -168,8 +175,8 @@ export default function DashboardPage() {
           <div className={styles.celebrationCard}>
             <div className={styles.celebrationEmoji}>🎉</div>
             <h2>Challenge Complete!</h2>
-            <p className={styles.celebrationXP}>+{todaysChallenge?.xp_reward || 60} XP</p>
-            <p className={styles.celebrationStreak}>🔥 {user.current_streak + 1} day streak!</p>
+            <p className={styles.celebrationXP}>+{todaysChallenge?.xpReward || 60} XP</p>
+            <p className={styles.celebrationStreak}>🔥 {user.currentStreak + 1} day streak!</p>
           </div>
         </div>
       )}
@@ -269,10 +276,10 @@ export default function DashboardPage() {
                 {diffConfig.label}
               </span>
               <span className={styles.timeBadge}>
-                ⏱ ~{todaysChallenge.estimated_minutes} min
+                ⏱ ~{todaysChallenge.estimatedMinutes} min
               </span>
               <span className={styles.xpBadge}>
-                ⭐ {todaysChallenge.xp_reward || todaysChallenge.xp_earned} XP
+                ⭐ {todaysChallenge.xpReward || todaysChallenge.xpEarned} XP
               </span>
             </div>
 
@@ -288,9 +295,9 @@ export default function DashboardPage() {
             )}
 
             {/* Proof image if submitted */}
-            {isCompleted && todaysChallenge.proof_image_url && (
+            {isCompleted && todaysChallenge.proofImageUrl && (
               <div className={styles.proofImage}>
-                <img src={todaysChallenge.proof_image_url} alt="Challenge proof" />
+                <img src={todaysChallenge.proofImageUrl} alt="Challenge proof" />
                 <span className={styles.proofLabel}>📸 Proof submitted</span>
               </div>
             )}
@@ -338,7 +345,11 @@ export default function DashboardPage() {
                   {proofFile && (
                     <button
                       className={styles.removeProof}
-                      onClick={() => { setProofFile(null); setProofPreview(null); }}
+                      onClick={() => {
+                        if (proofPreview) URL.revokeObjectURL(proofPreview);
+                        setProofFile(null);
+                        setProofPreview(null);
+                      }}
                     >
                       ✕ Remove photo
                     </button>

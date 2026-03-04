@@ -40,7 +40,7 @@ export default function ProfilePage() {
           name: json.profile.name,
           categories: json.profile.categories || [],
           difficulty: json.profile.difficulty || 'medium',
-          allow_outdoor: json.profile.allow_outdoor !== false,
+          allowOutdoor: json.profile.allowOutdoor !== false,
         });
       } catch {
         toast.error('Failed to load profile');
@@ -98,8 +98,8 @@ export default function ProfilePage() {
   const { profile, stats } = data;
   const level = Math.floor(profile.totalXp / 500) + 1;
   const xpInLevel = profile.totalXp % 500;
-  const memberSince = profile.created_at
-    ? format(parseISO(profile.created_at), 'MMMM yyyy')
+  const memberSince = profile.createdAt
+    ? format(parseISO(profile.createdAt), 'MMMM yyyy')
     : 'Unknown';
   
   const completionRate = stats.total_challenges > 0
@@ -244,17 +244,17 @@ export default function ProfilePage() {
           <p className={styles.prefLabel}>Outdoor Challenges</p>
           {editing ? (
             <label className={styles.toggleRow}>
-              <span>{editForm.allow_outdoor ? '✅ Allowed' : '❌ Not allowed'}</span>
+              <span>{editForm.allowOutdoor ? '✅ Allowed' : '❌ Not allowed'}</span>
               <button
-                className={`${styles.toggle} ${editForm.allow_outdoor ? styles.toggleOn : ''}`}
-                onClick={() => setEditForm({ ...editForm, allow_outdoor: !editForm.allow_outdoor })}
+                className={`${styles.toggle} ${editForm.allowOutdoor ? styles.toggleOn : ''}`}
+                onClick={() => setEditForm({ ...editForm, allowOutdoor: !editForm.allowOutdoor })}
               >
                 <span className={styles.toggleKnob} />
               </button>
             </label>
           ) : (
             <span className={styles.prefValue}>
-              {profile.allow_outdoor !== false ? '✅ Allowed' : '❌ Not allowed'}
+              {profile.allowOutdoor !== false ? '✅ Allowed' : '❌ Not allowed'}
             </span>
           )}
         </div>

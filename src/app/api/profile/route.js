@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromRequest } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
     const authUser = await getUserFromRequest(request);
@@ -56,7 +58,8 @@ export async function PATCH(request) {
       data.categories = body.categories.filter((c) => validCategories.includes(c));
     }
     if (validDifficulties.includes(body.difficulty)) data.difficulty = body.difficulty;
-    if (typeof body.allow_outdoor === 'boolean') data.allowOutdoor = body.allow_outdoor;
+    if (typeof body.allowOutdoor === 'boolean') data.allowOutdoor = body.allowOutdoor;
+    else if (typeof body.allow_outdoor === 'boolean') data.allowOutdoor = body.allow_outdoor;
 
     if (!Object.keys(data).length)
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });

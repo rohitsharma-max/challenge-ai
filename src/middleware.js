@@ -6,9 +6,6 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'fallback-secret-change-in-production-min-32-chars'
 );
 
-const publicPaths = ['/login', '/signup', '/'];
-const onboardingPath = '/onboarding';
-
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
   
@@ -19,6 +16,10 @@ export async function middleware(request) {
     pathname.startsWith('/uploads') ||
     pathname === '/api/auth/login' ||
     pathname === '/api/auth/signup' ||
+    pathname === '/api/auth/forgot-password' ||
+    pathname === '/api/auth/reset-password' ||
+    pathname === '/api/auth/verify-email' ||
+    pathname === '/api/auth/resend-otp' ||
     pathname === '/api/auth/logout'
   ) {
     return NextResponse.next();
@@ -38,7 +39,7 @@ export async function middleware(request) {
   }
 
   const isAuthenticated = !!payload;
-  const isPublicPath = publicPaths.includes(pathname);
+  const isVerified = payload?.emailVerified !== false;
   const isDashboardPath = pathname.startsWith('/dashboard') || 
                           pathname.startsWith('/history') || 
                           pathname.startsWith('/profile') ||
@@ -50,7 +51,13 @@ export async function middleware(request) {
   }
 
   // Redirect authenticated users away from auth pages
-  if (isAuthenticated && (pathname === '/login' || pathname === '/signup' || pathname === '/')) {
+  if (
+    isAuthenticated &&
+    (pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname === '/')
+  ) {
+    if (!isVerified) {
+      return NextResponse.redirect(new URL('/verify-email', request.url));
+    }
     // Check onboarding status
     if (!payload.onboardingComplete) {
       return NextResponse.redirect(new URL('/onboarding', request.url));
@@ -58,8 +65,19 @@ export async function middleware(request) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
+  if (isAuthenticated && pathname === '/verify-email' && isVerified) {
+    if (!payload.onboardingComplete) {
+      return NextResponse.redirect(new URL('/onboarding', request.url));
+    }
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
+  if (isAuthenticated && !isVerified && pathname !== '/verify-email' && isDashboardPath) {
+    return NextResponse.redirect(new URL('/verify-email', request.url));
+  }
+
   // Force onboarding for users who haven't completed it
-  if (isAuthenticated && !payload.onboardingComplete && pathname !== '/onboarding' && isDashboardPath) {
+  if (isAuthenticated && isVerified && !payload.onboardingComplete && pathname !== '/onboarding' && isDashboardPath) {
     return NextResponse.redirect(new URL('/onboarding', request.url));
   }
 

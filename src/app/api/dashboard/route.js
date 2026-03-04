@@ -4,6 +4,8 @@ import prisma from '@/lib/prisma';
 import { getUserFromRequest } from '@/lib/auth';
 import { getTodaysChallenge, checkAndUpdateStreak, getRestoreEligibility } from '@/lib/challenges';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
     const authUser = await getUserFromRequest(request);

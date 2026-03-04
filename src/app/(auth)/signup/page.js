@@ -34,8 +34,8 @@ export default function SignupPage() {
         return;
       }
 
-      toast.success('Account created! Let\'s set you up 🎉');
-      router.push('/onboarding');
+      toast.success('OTP sent to your email. Verify to continue.');
+      router.push(`/verify-email?email=${encodeURIComponent(data.email || form.email)}`);
     } catch {
       toast.error('Something went wrong. Please try again.');
     } finally {
@@ -103,3 +103,4 @@ export default function SignupPage() {
     </div>
   );
 }
+
