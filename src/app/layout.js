@@ -1,17 +1,45 @@
-// src/app/layout.js
+// src/app/layout.js — UPDATED with PWA support
+// Replace your existing src/app/layout.js with this file
+
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import PWASetup from '@/components/PWASetup';
 
 export const metadata = {
   title: 'Daily AI Challenge — Build Habits, Earn Streaks',
-  description: 'Get one personalized AI challenge every day and build streaks. Gamified habit-building that actually works.',
+  description:
+    'Get one personalized AI challenge every day and build streaks. Gamified habit-building that actually works.',
   keywords: 'daily challenge, habits, streak, productivity, gamification',
+
+  // ── PWA metadata ──────────────────────────────────────────────────────────
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'DailyAI',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  // Open Graph (looks great when shared)
+  openGraph: {
+    title: 'Daily AI Challenge',
+    description: 'One challenge. Every day. Build for life.',
+    type: 'website',
+  },
 };
 
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,         // prevents zoom (feels more native)
+  userScalable: false,
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)', color: '#7c3aed' },
+    { media: '(prefers-color-scheme: light)', color: '#6d28d9' },
+  ],
+  viewportFit: 'cover',   // fills iPhone notch area
 };
 
 export default function RootLayout({ children }) {
@@ -20,10 +48,33 @@ export default function RootLayout({ children }) {
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+
+        {/* ── PWA / Apple meta tags ── */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="DailyAI" />
+
+        {/* Apple touch icons (iOS home screen) */}
+        <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
+        <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144x144.png" />
+        <link rel="apple-touch-icon" sizes="120x120" href="/icons/icon-128x128.png" />
+
+        {/* Favicon */}
+        <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-96x96.png" />
+        <link rel="shortcut icon" href="/icons/icon-96x96.png" />
+
+        {/* Splash screen color on iOS */}
+        <meta name="msapplication-TileColor" content="#7c3aed" />
+        <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" />
       </head>
       <body>
         <ThemeProvider>
           {children}
+          {/* PWA install banner + service worker registration */}
+          <PWASetup />
           <Toaster
             position="top-right"
             toastOptions={{
