@@ -1,4 +1,5 @@
 // src/app/offline/page.js
+'use client'
 export default function OfflinePage() {
     return (
         <div
