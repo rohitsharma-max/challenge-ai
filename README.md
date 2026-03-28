@@ -1,4 +1,4 @@
-# ⚡ Daily AI Challenge App
+# ⚡ Streakify
 
 A gamified habit-building web app. One personalized challenge every day — complete it, earn XP, build your streak.
 

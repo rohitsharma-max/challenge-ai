@@ -122,7 +122,7 @@ export default function PWASetup() {
                         fontFamily: 'var(--font-display)',
                     }}
                 >
-                    Install DailyAI
+                    Install Streakify
                 </p>
                 <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4 }}>
                     Add to home screen for the best experience

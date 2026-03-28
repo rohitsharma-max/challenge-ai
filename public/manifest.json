@@ -1,6 +1,6 @@
 {
-    "name": "Daily AI Challenge",
-    "short_name": "DailyAI",
+    "name": "Streakify",
+    "short_name": "Streakify",
     "description": "One personalized challenge every day. Complete it, earn XP, build your streak.",
     "start_url": "/dashboard",
     "scope": "/",

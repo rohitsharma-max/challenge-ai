@@ -9,7 +9,7 @@ export default function AuthLayout({ children }) {
       <div className={styles.card}>
         <div className={styles.brand}>
           <span className={styles.brandIcon}>⚡</span>
-          <span className={styles.brandName}>DailyAI</span>
+          <span className={styles.brandName}>Streakify</span>
         </div>
         {children}
       </div>

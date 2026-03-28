@@ -33,7 +33,7 @@ export default function LandingPage() {
       <nav className={styles.nav}>
         <div className={styles.logo}>
           <span className={styles.logoIcon}>⚡</span>
-          <span>DailyAI</span>
+          <span>Streakify</span>
         </div>
         <div className={styles.navActions}>
           <Link href="/login" className="btn btn-ghost" style={{ padding: '10px 20px', fontSize: '14px' }}>
@@ -126,7 +126,7 @@ export default function LandingPage() {
       <footer className={styles.footer}>
         <div className={styles.logo} style={{ justifyContent: 'center' }}>
           <span className={styles.logoIcon}>⚡</span>
-          <span>DailyAI Challenge</span>
+          <span>Streakify</span>
         </div>
         <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '8px' }}>
           Built to help you grow, one day at a time.

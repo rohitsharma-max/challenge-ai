@@ -31,7 +31,7 @@ export default function AppLayout({ children }) {
         <div className={styles.sidebarTop}>
           <Link href="/dashboard" className={styles.logo}>
             <span className={styles.logoIcon}>⚡</span>
-            <span className={styles.logoText}>DailyAI</span>
+            <span className={styles.logoText}>Streakify</span>
           </Link>
 
           <nav className={styles.nav}>

@@ -7,7 +7,7 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import PWASetup from '@/components/PWASetup';
 
 export const metadata = {
-  title: 'Daily AI Challenge — Build Habits, Earn Streaks',
+  title: 'Streakify — Build Habits, Earn Streaks',
   description:
     'Get one personalized AI challenge every day and build streaks. Gamified habit-building that actually works.',
   keywords: 'daily challenge, habits, streak, productivity, gamification',
@@ -17,14 +17,14 @@ export const metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'DailyAI',
+    title: 'Streakify',
   },
   formatDetection: {
     telephone: false,
   },
   // Open Graph (looks great when shared)
   openGraph: {
-    title: 'Daily AI Challenge',
+    title: 'Streakify',
     description: 'One challenge. Every day. Build for life.',
     type: 'website',
   },
@@ -54,7 +54,7 @@ export default function RootLayout({ children }) {
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="DailyAI" />
+        <meta name="apple-mobile-web-app-title" content="Streakify" />
 
         {/* Apple touch icons (iOS home screen) */}
         <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png" />
