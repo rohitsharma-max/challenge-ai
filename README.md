@@ -23,7 +23,7 @@ A gamified habit-building web app. One personalized challenge every day — comp
 
 ### 1. Install
 ```bash
-cd daily-ai-challenge
+cd streakify
 npm install        # also runs `prisma generate` via postinstall
 ```
 

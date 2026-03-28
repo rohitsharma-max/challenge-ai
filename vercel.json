@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/notifications/send-morning",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/notifications/send-evening",
+      "schedule": "0 15 * * *"
+    }
+  ]
+}

@@ -34,8 +34,9 @@ model User {
   createdAt          DateTime   @default(now()) @map("created_at")
   updatedAt          DateTime   @updatedAt @map("updated_at")
 
-  userChallenges UserChallenge[]
-  streakRestores StreakRestore[]
+  userChallenges    UserChallenge[]
+  streakRestores    StreakRestore[]
+  pushSubscriptions PushSubscription[]
 
   @@map("users")
 }
@@ -89,6 +90,27 @@ model StreakRestore {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("streak_restores")
+}
+
+// Stores Web Push API subscription objects per user/device
+model PushSubscription {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  endpoint       String   @unique
+  p256dh         String
+  auth           String
+  morningEnabled Boolean  @default(true) @map("morning_enabled")
+  eveningEnabled Boolean  @default(true) @map("evening_enabled")
+  // Time strings like "08:00" — stored as user's local preference
+  morningTime    String   @default("08:00") @map("morning_time")
+  eveningTime    String   @default("20:00") @map("evening_time")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }
 
 enum Difficulty {

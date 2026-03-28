@@ -25,7 +25,7 @@ if (!fs.existsSync(OUTPUT_DIR)) {
     console.log('📁 Created public/icons/ directory');
 }
 
-// SVG icon for DailyAI — purple background with ⚡ bolt
+// SVG icon for Streakify — purple background with ⚡ bolt
 function generateSVG(size) {
     const padding = Math.round(size * 0.15);
     const boltSize = Math.round(size * 0.55);
@@ -71,7 +71,7 @@ function generateSVG(size) {
 }
 
 async function generateIcons() {
-    console.log('\n⚡ Generating DailyAI PWA icons...\n');
+    console.log('\n⚡ Generating Streakify PWA icons...\n');
 
     for (const size of SIZES) {
         const svg = generateSVG(size);

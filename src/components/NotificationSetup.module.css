@@ -1,0 +1,328 @@
+/* src/components/NotificationSetup.module.css */
+/* Matches Streakify's existing CSS variable design system */
+
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  padding: 8px 0;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Unsupported / Denied states ──────────────────────────────────────────── */
+
+.unsupported,
+.denied {
+  padding: 20px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.unsupportedIcon,
+.deniedIcon {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.deniedTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+/* ── Main panel ───────────────────────────────────────────────────────────── */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.panelCompact .prefs {
+  gap: 12px;
+}
+
+/* ── Status row ───────────────────────────────────────────────────────────── */
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+}
+
+.statusLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.statusDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dotActive   { background: var(--green); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
+.dotInactive { background: var(--text-muted); }
+
+.statusText {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Enable / Turn off buttons */
+.toggleBtn {
+  padding: 8px 18px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: var(--transition);
+  border: none;
+  flex-shrink: 0;
+}
+
+.toggleBtnOn {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 2px 12px var(--accent-glow);
+}
+
+.toggleBtnOn:hover:not(:disabled) {
+  background: var(--accent-light);
+  transform: translateY(-1px);
+}
+
+.toggleBtnOn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.toggleBtnOff {
+  background: var(--bg-glass);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.toggleBtnOff:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--red);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* ── Preferences panel ────────────────────────────────────────────────────── */
+
+.prefs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.prefRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: var(--transition);
+}
+
+.prefRow:hover {
+  border-color: var(--border-strong);
+}
+
+.prefInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.prefIcon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.prefTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.prefDesc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.prefControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Time input */
+.timeInput {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-body);
+  padding: 6px 8px;
+  width: 80px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.timeInput:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+/* Toggle switch — same style as existing Streakify toggles */
+.toggle {
+  width: 44px;
+  height: 26px;
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
+  position: relative;
+  transition: background 0.25s ease;
+  cursor: pointer;
+  border: none;
+  flex-shrink: 0;
+}
+
+.toggle.toggleOn {
+  background: var(--accent);
+}
+
+.toggleKnob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.25s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+.toggle.toggleOn .toggleKnob {
+  transform: translateX(18px);
+}
+
+/* Save button */
+.saveBtn {
+  align-self: flex-end;
+  padding: 10px 22px;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  border: none;
+  transition: var(--transition-spring);
+  box-shadow: 0 2px 12px var(--accent-glow);
+}
+
+.saveBtn:hover:not(:disabled) {
+  background: var(--accent-light);
+  transform: translateY(-1px);
+}
+
+.saveBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Not-subscribed callout ───────────────────────────────────────────────── */
+
+.callout {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.calloutItem {
+  font-size: 13px;
+  color: var(--accent-light);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 500px) {
+  .prefRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .prefControls {
+    align-self: flex-end;
+  }
+
+  .statusRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .toggleBtn {
+    align-self: flex-start;
+  }
+}
