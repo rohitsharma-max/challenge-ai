@@ -20,7 +20,9 @@ export async function middleware(request) {
     pathname === '/api/auth/reset-password' ||
     pathname === '/api/auth/verify-email' ||
     pathname === '/api/auth/resend-otp' ||
-    pathname === '/api/auth/logout'
+    pathname === '/api/auth/logout' ||
+    pathname === '/api/auth/google' ||
+    pathname === '/api/auth/google/callback'
   ) {
     return NextResponse.next();
   }
