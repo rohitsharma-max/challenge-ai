@@ -18,6 +18,27 @@ import { format } from 'date-fns';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Check if current time matches user's preferred notification time
+ * Allows a 10-minute window around the preferred time
+ * @param {string} preferredTime - Time in HH:MM format (e.g., "20:00")
+ * @returns {boolean} True if current time is within the window
+ */
+function isTimeWindow(preferredTime) {
+  if (!preferredTime) return false;
+  
+  const [prefHour, prefMin] = preferredTime.split(':').map(Number);
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMin = now.getMinutes();
+  
+  // Allow 10-minute window: 5 minutes before and 5 minutes after
+  const prefTotalMin = prefHour * 60 + prefMin;
+  const currTotalMin = currentHour * 60 + currentMin;
+  
+  return Math.abs(currTotalMin - prefTotalMin) <= 5;
+}
+
 export async function POST(request) {
   // Validate cron secret
   const authHeader = request.headers.get('authorization');
@@ -27,7 +48,7 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const results = { sent: 0, failed: 0, expired: 0, skipped: 0 };
+  const results = { sent: 0, failed: 0, expired: 0, skipped: 0, filtered: 0 };
   const expiredEndpoints = [];
 
   try {
@@ -67,8 +88,14 @@ export async function POST(request) {
         },
       },
     });
+    
+    // Filter subscriptions by user's preferred evening time
+    const filteredSubscriptions = subscriptions.filter(sub => isTimeWindow(sub.eveningTime));
 
-    console.log(`[evening-push] Sending to ${subscriptions.length} subscribers with pending challenges`);
+    console.log(
+      `[evening-push] Found ${subscriptions.length} pending, notifying ${filteredSubscriptions.length} matching preference times`
+    );
+    results.filtered = subscriptions.length - filteredSubscriptions.length;
 
     // How many hours until midnight?
     const now = new Date();
@@ -78,8 +105,8 @@ export async function POST(request) {
 
     // Process in batches of 50
     const BATCH_SIZE = 50;
-    for (let i = 0; i < subscriptions.length; i += BATCH_SIZE) {
-      const batch = subscriptions.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < filteredSubscriptions.length; i += BATCH_SIZE) {
+      const batch = filteredSubscriptions.slice(i, i + BATCH_SIZE);
 
       await Promise.all(
         batch.map(async (sub) => {
