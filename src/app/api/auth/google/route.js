@@ -1,10 +1,11 @@
 // src/app/api/auth/google/route.js
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { getAppUrl } from '@/lib/app-url';
 
-export async function GET() {
+export async function GET(request) {
   const state = crypto.randomBytes(16).toString('hex');
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const appUrl = getAppUrl(request);
 
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID,

@@ -2,13 +2,14 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createToken } from '@/lib/auth';
+import { getAppUrl } from '@/lib/app-url';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const state = searchParams.get('state');
   const error = searchParams.get('error');
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const appUrl = getAppUrl(request);
 
   // Handle user cancellation or errors from Google
   if (error) {
