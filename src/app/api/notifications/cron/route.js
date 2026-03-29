@@ -1,22 +1,20 @@
 // src/app/api/notifications/cron/route.js
 //
-// This single endpoint handles BOTH morning and evening notifications.
-// It runs every 30 minutes via an EXTERNAL free cron service (cron-job.org).
+// Handles BOTH morning and evening notifications in one endpoint.
+// Called every 30 minutes by cron-job.org (free external cron service).
 //
-// WHY external: Vercel Hobby only allows 1 daily cron.
-// cron-job.org is FREE and supports any schedule including every 30 minutes.
-//
-// Setup instructions at bottom of this file.
+// Key rules:
+//   Morning  → only notify if user has NOT completed today's challenge yet
+//   Evening  → only notify if user has NOT completed today's challenge yet
+//   Both     → only notify if current IST time is within ±15 min of user's preferred time
 
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendPushNotification, buildMorningPayload, buildEveningPayload } from '@/lib/webpush';
-import { getTodaysChallenge } from '@/lib/challenges';
 import { format } from 'date-fns';
 
 export const dynamic = 'force-dynamic';
 
-// IST = UTC + 5:30
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 
 function getISTNow() {
@@ -32,13 +30,11 @@ function getISTNow() {
 }
 
 /**
- * Returns true if the current IST time is within ±15 minutes of preferredTime.
- * Handles midnight wrap-around correctly.
- * @param {string} preferredTime - "HH:MM" in IST
+ * Returns true if current IST time is within ±15 minutes of preferredTime.
+ * Handles midnight wrap-around (e.g. 23:55 vs 00:05 = 10 min apart).
  */
 function isWithinWindow(preferredTime) {
   if (!preferredTime) return false;
-
   const [prefHour, prefMin] = preferredTime.split(':').map(Number);
   if (isNaN(prefHour) || isNaN(prefMin)) return false;
 
@@ -53,18 +49,22 @@ function isWithinWindow(preferredTime) {
   return diff <= 15;
 }
 
-async function processBatch(subscriptions, handler) {
-  const results = { sent: 0, failed: 0, expired: 0 };
+async function processBatch(subscriptions, buildPayload) {
+  const results = { sent: 0, failed: 0, expired: 0, skipped: 0 };
   const expiredEndpoints = [];
   const BATCH_SIZE = 50;
 
   for (let i = 0; i < subscriptions.length; i += BATCH_SIZE) {
     const batch = subscriptions.slice(i, i + BATCH_SIZE);
+
     await Promise.all(
       batch.map(async (sub) => {
         try {
-          const payload = await handler(sub);
-          if (!payload) { results.failed++; return; }
+          const payload = await buildPayload(sub);
+          if (!payload) {
+            results.skipped++;
+            return;
+          }
 
           const result = await sendPushNotification(
             { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
@@ -72,8 +72,12 @@ async function processBatch(subscriptions, handler) {
           );
 
           if (result.success) results.sent++;
-          else if (result.expired) { results.expired++; expiredEndpoints.push(sub.endpoint); }
-          else results.failed++;
+          else if (result.expired) {
+            results.expired++;
+            expiredEndpoints.push(sub.endpoint);
+          } else {
+            results.failed++;
+          }
         } catch (err) {
           console.error(`[cron] Error for sub ${sub.id}:`, err.message);
           results.failed++;
@@ -82,11 +86,11 @@ async function processBatch(subscriptions, handler) {
     );
   }
 
-  // Clean up expired subscriptions
   if (expiredEndpoints.length > 0) {
     await prisma.pushSubscription.deleteMany({
       where: { endpoint: { in: expiredEndpoints } },
     });
+    console.log(`[cron] Cleaned ${expiredEndpoints.length} expired subscriptions`);
   }
 
   return results;
@@ -105,43 +109,24 @@ export async function POST(request) {
 
   console.log(`[cron] Running at IST ${ist.hours}:${String(ist.minutes).padStart(2, '0')}`);
 
-  // ── Morning notifications ─────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
+  // MORNING notifications
+  // Only send to users who:
+  //   1. Have morningEnabled = true
+  //   2. Have NOT completed or restored today's challenge
+  //   3. Their morningTime matches current IST time (±15 min)
+  // ─────────────────────────────────────────────────────────────────────────
   const morningSubscriptions = await prisma.pushSubscription.findMany({
-    where: { morningEnabled: true },
-    include: {
-      user: { select: { id: true, currentStreak: true } },
-    },
-  });
-
-  const morningToNotify = morningSubscriptions.filter((sub) =>
-    isWithinWindow(sub.morningTime)
-  );
-
-  console.log(
-    `[cron] Morning: ${morningSubscriptions.length} subscriptions, ` +
-    `${morningToNotify.length} in time window`
-  );
-
-  const morningResults = await processBatch(morningToNotify, async (sub) => {
-    let challengeTitle = null;
-    try {
-      const challenge = await getTodaysChallenge(sub.userId);
-      challengeTitle = challenge?.title ?? null;
-    } catch { /* non-critical */ }
-
-    return buildMorningPayload({
-      challengeTitle,
-      streak: sub.user?.currentStreak ?? 0,
-    });
-  });
-
-  // ── Evening notifications ─────────────────────────────────────────────────
-  const eveningSubscriptions = await prisma.pushSubscription.findMany({
     where: {
-      eveningEnabled: true,
+      morningEnabled: true,
       user: {
-        userChallenges: {
-          some: { challengeDate: today, status: 'pending' },
+        NOT: {
+          userChallenges: {
+            some: {
+              challengeDate: today,
+              status: { in: ['completed', 'restored'] },
+            },
+          },
         },
       },
     },
@@ -151,7 +136,61 @@ export async function POST(request) {
           id: true,
           currentStreak: true,
           userChallenges: {
-            where: { challengeDate: today, status: 'pending' },
+            where: { challengeDate: today },
+            include: { challenge: { select: { title: true } } },
+            take: 1,
+          },
+        },
+      },
+    },
+  });
+
+  const morningToNotify = morningSubscriptions.filter((sub) =>
+    isWithinWindow(sub.morningTime)
+  );
+
+  console.log(
+    `[cron] Morning: ${morningSubscriptions.length} not completed today, ` +
+    `${morningToNotify.length} match time window`
+  );
+
+  const morningResults = await processBatch(morningToNotify, async (sub) => {
+    const challengeTitle = sub.user?.userChallenges?.[0]?.challenge?.title ?? null;
+    return buildMorningPayload({
+      challengeTitle,
+      streak: sub.user?.currentStreak ?? 0,
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // EVENING notifications
+  // Only send to users who:
+  //   1. Have eveningEnabled = true
+  //   2. Have a PENDING challenge today (not completed, not restored)
+  //   3. Their eveningTime matches current IST time (±15 min)
+  // ─────────────────────────────────────────────────────────────────────────
+  const eveningSubscriptions = await prisma.pushSubscription.findMany({
+    where: {
+      eveningEnabled: true,
+      user: {
+        userChallenges: {
+          some: {
+            challengeDate: today,
+            status: 'pending',
+          },
+        },
+      },
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          currentStreak: true,
+          userChallenges: {
+            where: {
+              challengeDate: today,
+              status: 'pending',
+            },
             include: { challenge: { select: { title: true } } },
             take: 1,
           },
@@ -165,8 +204,8 @@ export async function POST(request) {
   );
 
   console.log(
-    `[cron] Evening: ${eveningSubscriptions.length} pending users, ` +
-    `${eveningToNotify.length} in time window`
+    `[cron] Evening: ${eveningSubscriptions.length} with pending challenge, ` +
+    `${eveningToNotify.length} match time window`
   );
 
   const minutesUntilMidnight = 1440 - ist.totalMinutes;
@@ -194,35 +233,3 @@ export async function POST(request) {
 export async function GET(request) {
   return POST(request);
 }
-
-/*
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  SETUP: cron-job.org (FREE, no credit card needed)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-1. Go to https://cron-job.org and create a free account
-
-2. Click "CREATE CRONJOB"
-
-3. Fill in:
-   Title:    Streakify Notifications
-   URL:      https://your-domain.vercel.app/api/notifications/cron
-   Schedule: Every 30 minutes  (select "Custom" → /30 * * * *)
-
-4. Under "Advanced" → Headers, add:
-   Name:   Authorization
-   Value:  Bearer <your CRON_SECRET from .env.local>
-
-5. Save and enable the cron job
-
-That's it! cron-job.org will call your endpoint every 30 minutes,
-and users will receive notifications within 15 minutes of their
-chosen time.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  UPDATE vercel.json (remove the broken crons)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Replace your vercel.json with just: {}
-Or keep it empty — no crons needed since cron-job.org handles it.
-*/
