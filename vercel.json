@@ -3,7 +3,7 @@
   "crons": [
     {
       "path": "/api/notifications/send-morning",
-      "schedule": "*/30 * * * *"
+      "schedule": "*/5 * * * *"
     },
     {
       "path": "/api/notifications/send-evening",
