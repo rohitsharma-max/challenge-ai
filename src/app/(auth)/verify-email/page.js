@@ -4,7 +4,6 @@ import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import styles from '../login/login.module.css';
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -74,12 +73,12 @@ function VerifyEmailContent() {
 
   return (
     <div>
-      <h1 className={styles.title}>Verify your email</h1>
-      <p className={styles.subtitle}>Enter the 6-digit code sent to your email.</p>
+      <h1 className="font-display text-[26px] font-extrabold mb-1.5" style={{ color: 'var(--text-primary)' }}>Verify your email</h1>
+      <p className="text-[15px] mb-8" style={{ color: 'var(--text-secondary)' }}>Enter the 6-digit code sent to your email.</p>
 
-      <form onSubmit={handleVerify} className={styles.form}>
-        <div className={styles.field}>
-          <label className={styles.label}>Email</label>
+      <form onSubmit={handleVerify} className="flex flex-col gap-5">
+        <div className="flex flex-col gap-2">
+          <label className="text-[13px] font-semibold tracking-wide" style={{ color: 'var(--text-secondary)' }}>Email</label>
           <input
             type="email"
             className="input"
@@ -90,8 +89,8 @@ function VerifyEmailContent() {
           />
         </div>
 
-        <div className={styles.field}>
-          <label className={styles.label}>OTP</label>
+        <div className="flex flex-col gap-2">
+          <label className="text-[13px] font-semibold tracking-wide" style={{ color: 'var(--text-secondary)' }}>OTP</label>
           <input
             type="text"
             className="input"
@@ -106,7 +105,7 @@ function VerifyEmailContent() {
 
         <button
           type="submit"
-          className={`btn btn-primary ${styles.submitBtn}`}
+          className="btn btn-primary w-full py-4 text-base rounded-2xl mt-2"
           disabled={loading}
         >
           {loading ? (
@@ -119,21 +118,21 @@ function VerifyEmailContent() {
         </button>
       </form>
 
-      <p className={styles.footer}>
+      <p className="text-center mt-6 text-[14px]" style={{ color: 'var(--text-secondary)' }}>
         Did not receive OTP?{' '}
         <button
           type="button"
-          className={styles.link}
+          className="font-semibold"
           onClick={handleResend}
           disabled={resending}
-          style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+          style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--accent-light)' }}
         >
           {resending ? 'Sending...' : 'Resend code'}
         </button>
       </p>
 
-      <p className={styles.footer}>
-        Already verified? <Link href="/login" className={styles.link}>Log in</Link>
+      <p className="text-center mt-4 text-[14px]" style={{ color: 'var(--text-secondary)' }}>
+        Already verified? <Link href="/login" className="font-semibold" style={{ color: 'var(--accent-light)' }}>Log in</Link>
       </p>
     </div>
   );
@@ -141,7 +140,7 @@ function VerifyEmailContent() {
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={<div className={styles.subtitle}>Loading...</div>}>
+    <Suspense fallback={<div className="text-[15px]" style={{ color: 'var(--text-secondary)' }}>Loading...</div>}>
       <VerifyEmailContent />
     </Suspense>
   );

@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import styles from '../login/login.module.css';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -82,15 +81,15 @@ export default function ForgotPasswordPage() {
 
   return (
     <div>
-      <h1 className={styles.title}>Forgot password</h1>
-      <p className={styles.subtitle}>
+      <h1 className="font-display text-[26px] font-extrabold mb-1.5" style={{ color: 'var(--text-primary)' }}>Forgot password</h1>
+      <p className="text-[15px] mb-8" style={{ color: 'var(--text-secondary)' }}>
         {step === 'request' ? 'Get OTP on your email to reset password.' : 'Enter OTP and set a new password.'}
       </p>
 
       {step === 'request' ? (
-        <form onSubmit={handleSendOtp} className={styles.form}>
-          <div className={styles.field}>
-            <label className={styles.label}>Email</label>
+        <form onSubmit={handleSendOtp} className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+            <label className="text-[13px] font-semibold tracking-wide" style={{ color: 'var(--text-secondary)' }}>Email</label>
             <input
               type="email"
               className="input"
@@ -104,7 +103,7 @@ export default function ForgotPasswordPage() {
 
           <button
             type="submit"
-            className={`btn btn-primary ${styles.submitBtn}`}
+            className="btn btn-primary w-full py-4 text-base rounded-2xl mt-2"
             disabled={loading}
           >
             {loading ? (
@@ -117,9 +116,9 @@ export default function ForgotPasswordPage() {
           </button>
         </form>
       ) : (
-        <form onSubmit={handleResetPassword} className={styles.form}>
-          <div className={styles.field}>
-            <label className={styles.label}>Email</label>
+        <form onSubmit={handleResetPassword} className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+            <label className="text-[13px] font-semibold tracking-wide" style={{ color: 'var(--text-secondary)' }}>Email</label>
             <input
               type="email"
               className="input"
@@ -129,8 +128,8 @@ export default function ForgotPasswordPage() {
             />
           </div>
 
-          <div className={styles.field}>
-            <label className={styles.label}>OTP</label>
+          <div className="flex flex-col gap-2">
+            <label className="text-[13px] font-semibold tracking-wide" style={{ color: 'var(--text-secondary)' }}>OTP</label>
             <input
               type="text"
               className="input"
@@ -143,8 +142,8 @@ export default function ForgotPasswordPage() {
             />
           </div>
 
-          <div className={styles.field}>
-            <label className={styles.label}>New password</label>
+          <div className="flex flex-col gap-2">
+            <label className="text-[13px] font-semibold tracking-wide" style={{ color: 'var(--text-secondary)' }}>New password</label>
             <input
               type="password"
               className="input"
@@ -156,8 +155,8 @@ export default function ForgotPasswordPage() {
             />
           </div>
 
-          <div className={styles.field}>
-            <label className={styles.label}>Confirm new password</label>
+          <div className="flex flex-col gap-2">
+            <label className="text-[13px] font-semibold tracking-wide" style={{ color: 'var(--text-secondary)' }}>Confirm new password</label>
             <input
               type="password"
               className="input"
@@ -171,7 +170,7 @@ export default function ForgotPasswordPage() {
 
           <button
             type="submit"
-            className={`btn btn-primary ${styles.submitBtn}`}
+            className="btn btn-primary w-full py-4 text-base rounded-2xl mt-2"
             disabled={loading}
           >
             {loading ? (
@@ -185,7 +184,7 @@ export default function ForgotPasswordPage() {
 
           <button
             type="button"
-            className="btn btn-ghost"
+            className="btn btn-ghost w-full py-4 text-base rounded-2xl"
             onClick={() => setStep('request')}
             disabled={loading}
           >
@@ -194,8 +193,8 @@ export default function ForgotPasswordPage() {
         </form>
       )}
 
-      <p className={styles.footer}>
-        Back to <Link href="/login" className={styles.link}>Log in</Link>
+      <p className="text-center mt-6 text-[14px]" style={{ color: 'var(--text-secondary)' }}>
+        Back to <Link href="/login" className="font-semibold" style={{ color: 'var(--accent-light)' }}>Log in</Link>
       </p>
     </div>
   );
