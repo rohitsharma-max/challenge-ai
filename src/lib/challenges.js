@@ -173,6 +173,33 @@ export async function checkAndUpdateStreak(userId) {
 }
 
 /**
+ * Count consecutive completed/restored days going backwards from a given date (exclusive).
+ * e.g. if the missed day is Day 6, we count Days 5, 4, 3, 2, 1 until a gap is found.
+ */
+async function countStreakBefore(userId, beforeDate) {
+  let streak = 0;
+  let checkDate = subDays(beforeDate, 1);
+
+  // Walk backwards day by day until we find a day that wasn't completed/restored
+  for (let i = 0; i < 365; i++) {
+    const dateOnly = toDateOnly(checkDate);
+    const record = await prisma.userChallenge.findUnique({
+      where: { userId_challengeDate: { userId, challengeDate: dateOnly } },
+      select: { status: true },
+    });
+
+    if (record && (record.status === 'completed' || record.status === 'restored')) {
+      streak++;
+      checkDate = subDays(checkDate, 1);
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
+/**
  * Restore streak using XP
  */
 export async function restoreStreak(userId) {
@@ -182,7 +209,7 @@ export async function restoreStreak(userId) {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { totalXp: true, lastRestoreDate: true },
+    select: { totalXp: true, lastRestoreDate: true, bestStreak: true },
   });
 
   if (!user) throw new Error('User not found');
@@ -202,6 +229,23 @@ export async function restoreStreak(userId) {
     throw new Error('No missed challenge found for yesterday.');
   }
 
+  // Count how many consecutive days were completed BEFORE the missed day.
+  // e.g. if user had a 5-day streak before missing day 6, this returns 5.
+  // After restoring the missed day, their streak becomes 5 + 1 = 6.
+  const streakBeforeMiss = await countStreakBefore(userId, yesterday);
+  const restoredStreak = streakBeforeMiss + 1; // +1 for the restored missed day itself
+
+  // Also account for today if it's already been completed
+  const todayChallenge = await prisma.userChallenge.findUnique({
+    where: { userId_challengeDate: { userId, challengeDate: today } },
+    select: { status: true },
+  });
+  const todayCompleted =
+    todayChallenge?.status === 'completed' || todayChallenge?.status === 'restored';
+
+  const finalStreak = todayCompleted ? restoredStreak + 1 : restoredStreak;
+  const newBestStreak = Math.max(finalStreak, user.bestStreak);
+
   await prisma.$transaction([
     prisma.userChallenge.update({
       where: { id: missedChallenge.id },
@@ -211,7 +255,8 @@ export async function restoreStreak(userId) {
       where: { id: userId },
       data: {
         totalXp: { decrement: XP_COSTS.STREAK_RESTORE },
-        currentStreak: { increment: 1 },
+        currentStreak: finalStreak,
+        bestStreak: newBestStreak,
         lastRestoreDate: today,
       },
     }),
