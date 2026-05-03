@@ -16,20 +16,55 @@ const DIFFICULTY_CONFIG = {
   hard:   { color: '#ef4444', bg: 'rgba(239,68,68,0.12)',  label: 'Hard' },
 };
 
+// Typewriter animation
+function TypingMessage({ text }) {
+  const [displayed, setDisplayed] = useState('');
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    if (!text) return;
+    setDisplayed('');
+    setDone(false);
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i >= text.length) { setDone(true); clearInterval(interval); return; }
+      setDisplayed(text.slice(0, i + 1));
+      i++;
+    }, 20);
+    return () => clearInterval(interval);
+  }, [text]);
+
+  return (
+    <span>
+      {displayed}
+      {!done && (
+        <span style={{
+          display: 'inline-block', width: 2, height: '1em',
+          background: 'var(--accent-light)', marginLeft: 2,
+          verticalAlign: 'text-bottom',
+          animation: 'blink 0.7s step-end infinite',
+        }} />
+      )}
+    </span>
+  );
+}
+
 export default function DashboardPage() {
-  const [data, setData]               = useState(null);
-  const [loading, setLoading]         = useState(true);
-  const [completing, setCompleting]   = useState(false);
-  const [restoring, setRestoring]     = useState(false);
-  const [proofFile, setProofFile]     = useState(null);
+  const [data, setData]             = useState(null);
+  const [loading, setLoading]       = useState(true);
+  const [completing, setCompleting] = useState(false);
+  const [restoring, setRestoring]   = useState(false);
+  const [proofFile, setProofFile]   = useState(null);
   const [proofPreview, setProofPreview] = useState(null);
-  const [proofText, setProofText]     = useState('');
+  const [proofText, setProofText]   = useState('');
+  const [proofError, setProofError] = useState(null); // rejection message
   const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationData, setCelebrationData] = useState(null);
   const fileRef = useRef();
 
   const fetchDashboard = async () => {
     try {
-      const res  = await fetch('/api/dashboard');
+      const res = await fetch('/api/dashboard');
       if (!res.ok) throw new Error('Failed to load');
       setData(await res.json());
     } catch { toast.error('Failed to load dashboard'); }
@@ -55,24 +90,45 @@ export default function DashboardPage() {
     fire(0.25, { spread: 26, startVelocity: 55, colors: ['#7c3aed', '#9f5bff'] });
     fire(0.2,  { spread: 60, colors: ['#ff6b35', '#fbbf24'] });
     fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8, colors: ['#10b981', '#34d399'] });
-    fire(0.1,  { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2, colors: ['#fff', '#f0f0f8'] });
+    fire(0.1,  { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2, colors: ['#fff'] });
     fire(0.1,  { spread: 120, startVelocity: 45, colors: ['#7c3aed', '#ff6b35'] });
+  };
+
+  const closeCelebration = () => {
+    setShowCelebration(false);
+    fetchDashboard();
   };
 
   const handleComplete = async () => {
     if (!proofText.trim()) { toast.error('Please describe how you completed the challenge'); return; }
+    setProofError(null);
     setCompleting(true);
     try {
       const formData = new FormData();
       formData.append('proofText', proofText.trim());
       if (proofFile) formData.append('proof', proofFile);
+
       const res    = await fetch('/api/challenges/complete', { method: 'POST', body: formData });
       const result = await res.json();
-      if (!res.ok) { toast.error(result.error || 'Failed to complete challenge'); return; }
+
+      if (!res.ok) {
+        if (result.proofRejected) {
+          // Show rejection inline — don't toast, show it under the textarea
+          setProofError(result.error || 'Please write more detail about what you actually did.');
+        } else {
+          toast.error(result.error || 'Failed to complete challenge');
+        }
+        return;
+      }
+
+      setCelebrationData({
+        xpEarned: result.xpEarned,
+        newStreak: result.newStreak,
+        claudeReaction: result.claudeReaction,
+      });
       setShowCelebration(true);
       fireConfetti();
-      setTimeout(() => { setShowCelebration(false); fetchDashboard(); }, 3500);
-      toast.success(`🎉 +${result.xpEarned} XP earned! Streak: ${result.newStreak} 🔥`);
+      // NO auto-dismiss — user closes manually
     } catch { toast.error('Something went wrong'); }
     finally  { setCompleting(false); }
   };
@@ -110,26 +166,93 @@ export default function DashboardPage() {
 
   return (
     <div className="animate-fade-in">
+      <style>{`@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }`}</style>
 
-      {/* ── Celebration overlay ─────────────────────────────────────────────── */}
-      {showCelebration && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center animate-fade-in"
-          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}>
-          <div className="text-center rounded-3xl p-12 animate-scale-in"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 60px var(--accent-glow)' }}>
-            <span className="text-6xl block mb-4 animate-bounce">🎉</span>
-            <h2 className="font-display text-3xl font-extrabold mb-3" style={{ color: 'var(--text-primary)' }}>Challenge Complete!</h2>
-            <p className="font-display text-2xl font-bold mb-2" style={{ color: 'var(--gold)' }}>
-              +{todaysChallenge?.xpReward || 60} XP
-            </p>
-            <p className="text-lg font-semibold" style={{ color: 'var(--fire)' }}>
-              🔥 {user.currentStreak + 1} day streak!
-            </p>
+      {/* ── Celebration overlay — NO auto-dismiss ───────────────────────────── */}
+      {showCelebration && celebrationData && (
+        <div
+          className="fixed inset-0 z-[999] flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(12px)' }}
+        >
+          <div
+            className="rounded-3xl p-8 sm:p-10 animate-scale-in mx-4 flex flex-col gap-5"
+            style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              boxShadow: '0 8px 60px rgba(0,0,0,0.6), 0 0 80px var(--accent-glow)',
+              maxWidth: 440,
+              width: '100%',
+            }}
+          >
+            {/* Header */}
+            <div className="text-center">
+              <span className="text-6xl block mb-4 animate-bounce">🎉</span>
+              <h2 className="font-display text-3xl font-extrabold mb-2" style={{ color: 'var(--text-primary)' }}>
+                Challenge Complete!
+              </h2>
+              <div className="flex items-center justify-center gap-4">
+                <span className="font-display text-xl font-bold" style={{ color: 'var(--gold)' }}>
+                  +{celebrationData.xpEarned} XP
+                </span>
+                <span style={{ color: 'var(--text-muted)' }}>·</span>
+                <span className="text-lg font-semibold" style={{ color: 'var(--fire)' }}>
+                  🔥 {celebrationData.newStreak} day streak
+                </span>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div style={{ height: 1, background: 'var(--border)' }} />
+
+            {/* AI reaction */}
+            {celebrationData.claudeReaction ? (
+              <div
+                className="rounded-2xl p-5"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(159,91,255,0.05))',
+                  border: '1px solid rgba(124,58,237,0.2)',
+                }}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+                    style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-light))' }}
+                  >
+                    ⚡
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--accent-light)' }}>
+                    AI Coach says
+                  </span>
+                </div>
+                <p className="text-[15px] leading-relaxed" style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>
+                  "<TypingMessage text={celebrationData.claudeReaction} />"
+                </p>
+              </div>
+            ) : (
+              // No reaction (no API key set) — show simpler success state
+              <div
+                className="rounded-2xl p-4 flex items-center gap-3"
+                style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}
+              >
+                <span className="text-2xl">🌟</span>
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  Keep building your streak — consistency is everything.
+                </p>
+              </div>
+            )}
+
+            {/* Close button — explicit, not auto-dismiss */}
+            <button
+              className="btn btn-primary w-full py-3.5 text-base rounded-2xl"
+              onClick={closeCelebration}
+            >
+              Continue →
+            </button>
           </div>
         </div>
       )}
 
-      {/* ── Header ──────────────────────────────────────────────────────────── */}
+      {/* ── Header ── */}
       <div className="flex items-start justify-between mb-8">
         <div>
           <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>{today}</p>
@@ -139,19 +262,17 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Stats row ───────────────────────────────────────────────────────── */}
+      {/* ── Stats row ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         {[
-          { icon: '🔥', value: user.currentStreak,             label: 'Day Streak',   accent: 'rgba(255,107,53,0.2)' },
-          { icon: '⭐', value: user?.totalXp?.toLocaleString(), label: 'Total XP',     accent: 'rgba(251,191,36,0.2)' },
-          { icon: '🏆', value: user.bestStreak,                 label: 'Best Streak',  accent: 'rgba(59,130,246,0.2)' },
-          { icon: '⚡', value: `Lv. ${level}`,                  label: 'Level',        accent: 'rgba(124,58,237,0.2)' },
+          { icon: '🔥', value: user.currentStreak,             label: 'Day Streak',  accent: 'rgba(255,107,53,0.2)' },
+          { icon: '⭐', value: user?.totalXp?.toLocaleString(), label: 'Total XP',    accent: 'rgba(251,191,36,0.2)' },
+          { icon: '🏆', value: user.bestStreak,                 label: 'Best Streak', accent: 'rgba(59,130,246,0.2)' },
+          { icon: '⚡', value: `Lv. ${level}`,                  label: 'Level',       accent: 'rgba(124,58,237,0.2)' },
         ].map((stat) => (
-          <div
-            key={stat.label}
+          <div key={stat.label}
             className="flex items-center gap-3 p-4 rounded-2xl transition-all duration-200 hover:-translate-y-0.5"
-            style={{ background: 'var(--bg-card)', border: `1px solid ${stat.accent}` }}
-          >
+            style={{ background: 'var(--bg-card)', border: `1px solid ${stat.accent}` }}>
             <span className="text-2xl leading-none">{stat.icon}</span>
             <div className="flex flex-col gap-0.5">
               <span className="font-display text-xl font-extrabold leading-none" style={{ color: 'var(--text-primary)' }}>{stat.value}</span>
@@ -161,7 +282,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* ── XP Progress ─────────────────────────────────────────────────────── */}
+      {/* ── XP Progress ── */}
       <div className="rounded-2xl p-4 mb-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
         <div className="flex justify-between mb-2.5">
           <span className="text-[13px] font-semibold" style={{ color: 'var(--text-secondary)' }}>Level {level} → {level + 1}</span>
@@ -172,7 +293,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Restore banner ──────────────────────────────────────────────────── */}
+      {/* ── Restore banner ── */}
       {restoreInfo?.canRestore && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl mb-6"
           style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
@@ -182,17 +303,13 @@ export default function DashboardPage() {
               You missed yesterday. Restore your streak for {restoreInfo.xpCost} XP.
             </p>
           </div>
-          <button
-            className="btn btn-primary flex-shrink-0 text-[13px] px-4 py-2.5"
-            onClick={handleRestore}
-            disabled={restoring}
-          >
+          <button className="btn btn-primary flex-shrink-0 text-[13px] px-4 py-2.5" onClick={handleRestore} disabled={restoring}>
             {restoring ? '...' : `Restore (${restoreInfo.xpCost} XP)`}
           </button>
         </div>
       )}
 
-      {/* ── Today's Challenge ───────────────────────────────────────────────── */}
+      {/* ── Today's Challenge ── */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Today's Challenge</h2>
@@ -203,9 +320,7 @@ export default function DashboardPage() {
           <div
             className="rounded-3xl p-6 sm:p-7 transition-all duration-200 animate-slide-up"
             style={{
-              background: isCompleted
-                ? 'linear-gradient(135deg, var(--bg-card), rgba(16,185,129,0.04))'
-                : 'var(--bg-card)',
+              background: isCompleted ? 'linear-gradient(135deg, var(--bg-card), rgba(16,185,129,0.04))' : 'var(--bg-card)',
               border: `1px solid ${isCompleted ? 'rgba(16,185,129,0.3)' : 'var(--border)'}`,
             }}
           >
@@ -236,27 +351,35 @@ export default function DashboardPage() {
               {todaysChallenge.description}
             </p>
 
-            {/* Proof submitted (completed) */}
-            {isCompleted && todaysChallenge.proofText && (
-              <div className="rounded-xl p-4 mb-5"
-                style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)' }}>
-                <p className="text-xs font-bold uppercase tracking-wide mb-1.5" style={{ color: 'var(--accent-light)' }}>📝 Your proof:</p>
-                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>{todaysChallenge.proofText}</p>
-              </div>
-            )}
-
-            {isCompleted && todaysChallenge.proofImageUrl && (
-              <div className="mb-5 rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
-                <img src={todaysChallenge.proofImageUrl} alt="Challenge proof" className="w-full max-h-72 object-cover" />
-                <span className="block text-xs mt-2 pb-2 px-2" style={{ color: 'var(--text-muted)' }}>📸 Proof submitted</span>
-              </div>
+            {/* Completed state */}
+            {isCompleted && (
+              <>
+                {todaysChallenge.proofText && (
+                  <div className="rounded-xl p-4 mb-4"
+                    style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)' }}>
+                    <p className="text-xs font-bold uppercase tracking-wide mb-1.5" style={{ color: 'var(--accent-light)' }}>📝 Your proof:</p>
+                    <p className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>{todaysChallenge.proofText}</p>
+                  </div>
+                )}
+                {todaysChallenge.proofImageUrl && (
+                  <div className="mb-4 rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+                    <img src={todaysChallenge.proofImageUrl} alt="Challenge proof" className="w-full max-h-72 object-cover" />
+                  </div>
+                )}
+                <div className="flex items-center gap-3 p-4 rounded-2xl"
+                  style={{ background: 'rgba(16,185,129,0.08)' }}>
+                  <span className="text-2xl">🌟</span>
+                  <p className="text-[15px]" style={{ color: 'var(--text-secondary)' }}>
+                    Excellent work! Come back tomorrow for your next challenge.
+                  </p>
+                </div>
+              </>
             )}
 
             {/* Action section */}
             {!isCompleted && (
               <div className="border-t pt-6 flex flex-col gap-5" style={{ borderColor: 'var(--border)' }}>
 
-                {/* Required proof text */}
                 <div>
                   <label className="flex items-center gap-2 text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
                     📝 How did you complete it?
@@ -266,22 +389,39 @@ export default function DashboardPage() {
                     </span>
                   </label>
                   <textarea
-                    className="w-full rounded-xl text-sm leading-relaxed p-3 resize-y min-h-[80px] transition-all duration-200 box-border"
+                    className="w-full rounded-xl text-sm leading-relaxed p-3 resize-y min-h-[100px] transition-all duration-200 box-border"
                     style={{
                       background: 'var(--bg-secondary)',
-                      border: '1.5px solid var(--border)',
+                      border: `1.5px solid ${proofError ? '#ef4444' : 'var(--border)'}`,
                       color: 'var(--text-primary)',
                       fontFamily: 'var(--font-body)',
                     }}
-                    placeholder="Describe what you did, how it went, any challenges you faced..."
+                    placeholder="Describe what you actually did. E.g. 'I ran 3km in the park, legs were burning but I pushed through the last 500m...'"
                     value={proofText}
-                    onChange={(e) => setProofText(e.target.value)}
-                    rows={3}
+                    onChange={(e) => { setProofText(e.target.value); if (proofError) setProofError(null); }}
+                    rows={4}
                     maxLength={500}
-                    onFocus={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.boxShadow = '0 0 0 3px var(--accent-dim)'; }}
-                    onBlur={e  => { e.target.style.borderColor = 'var(--border)';  e.target.style.boxShadow = 'none'; }}
+                    onFocus={e => { e.target.style.borderColor = proofError ? '#ef4444' : 'var(--accent)'; e.target.style.boxShadow = '0 0 0 3px var(--accent-dim)'; }}
+                    onBlur={e  => { e.target.style.borderColor = proofError ? '#ef4444' : 'var(--border)'; e.target.style.boxShadow = 'none'; }}
                   />
-                  <p className="text-[12px] text-right mt-1" style={{ color: 'var(--text-muted)' }}>{proofText.length}/500</p>
+
+                  {/* Proof rejection error */}
+                  {proofError && (
+                    <div className="mt-2 flex items-start gap-2 p-3 rounded-xl animate-fade-in"
+                      style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)' }}>
+                      <span className="text-base flex-shrink-0">⚠️</span>
+                      <p className="text-sm leading-relaxed" style={{ color: '#ef4444' }}>
+                        {proofError}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between mt-1.5">
+                    <p className="text-[12px]" style={{ color: 'var(--text-muted)' }}>
+                      ⚡ AI validates your proof and reacts personally
+                    </p>
+                    <p className="text-[12px]" style={{ color: 'var(--text-muted)' }}>{proofText.length}/500</p>
+                  </div>
                 </div>
 
                 {/* Optional photo */}
@@ -294,7 +434,7 @@ export default function DashboardPage() {
                     style={{ border: '1.5px dashed var(--border)' }}
                     onClick={() => fileRef.current?.click()}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.background = 'var(--accent-dim)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)';  e.currentTarget.style.background = 'transparent'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'transparent'; }}
                   >
                     {proofPreview ? (
                       <img src={proofPreview} alt="Preview" className="w-full max-h-52 object-cover" />
@@ -308,35 +448,25 @@ export default function DashboardPage() {
                   </div>
                   <input type="file" ref={fileRef} accept="image/*" onChange={handleFileChange} className="hidden" />
                   {proofFile && (
-                    <button
-                      className="text-xs mt-2 transition-all duration-200"
-                      style={{ color: 'var(--red)' }}
-                      onClick={() => { if (proofPreview) URL.revokeObjectURL(proofPreview); setProofFile(null); setProofPreview(null); }}
-                    >
+                    <button className="text-xs mt-2" style={{ color: 'var(--red)' }}
+                      onClick={() => { if (proofPreview) URL.revokeObjectURL(proofPreview); setProofFile(null); setProofPreview(null); }}>
                       ✕ Remove photo
                     </button>
                   )}
                 </div>
 
-                {/* Complete button */}
                 <button
                   className="btn btn-primary w-full py-4 text-[17px] rounded-2xl animate-pulse-glow"
                   onClick={handleComplete}
                   disabled={completing || !proofText.trim()}
                 >
                   {completing
-                    ? <><span className="spinner w-[18px] h-[18px] border-2" /> Completing...</>
-                    : <>✅ Mark as Complete</>}
+                    ? <><span className="spinner w-[18px] h-[18px] border-2" /> Validating your proof…</>
+                    : <>✅ Complete & Get Reaction</>}
                 </button>
-              </div>
-            )}
 
-            {isCompleted && (
-              <div className="flex items-center gap-3 p-4 rounded-2xl"
-                style={{ background: 'rgba(16,185,129,0.08)' }}>
-                <span className="text-2xl">🌟</span>
-                <p className="text-[15px]" style={{ color: 'var(--text-secondary)' }}>
-                  Excellent work! Come back tomorrow for your next challenge.
+                <p className="text-center text-[12px]" style={{ color: 'var(--text-muted)' }}>
+                  AI checks that your proof is genuine before saving your streak
                 </p>
               </div>
             )}

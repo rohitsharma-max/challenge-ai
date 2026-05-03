@@ -88,19 +88,19 @@ export async function assignDailyChallenge(userId, date) {
  */
 export async function completeChallenge(userId, proofImageUrl = null, proofText = null) {
   const today = toDateOnly();
-
+ 
   const userChallenge = await prisma.userChallenge.findUnique({
     where: { userId_challengeDate: { userId, challengeDate: today } },
     include: { challenge: true },
   });
-
+ 
   if (!userChallenge) throw new Error('No challenge found for today');
   if (userChallenge.status === 'completed' || userChallenge.status === 'restored') {
     throw new Error('Challenge already completed today');
   }
-
+ 
   const xpEarned = userChallenge.challenge?.xpReward ?? XP_REWARDS[userChallenge.challenge?.difficulty ?? 'medium'];
-
+ 
   const [, updatedUser] = await prisma.$transaction([
     prisma.userChallenge.update({
       where: { id: userChallenge.id },
@@ -111,7 +111,7 @@ export async function completeChallenge(userId, proofImageUrl = null, proofText 
       data: { currentStreak: { increment: 1 }, totalXp: { increment: xpEarned } },
     }),
   ]);
-
+ 
   // Update best streak if surpassed
   if (updatedUser.currentStreak > updatedUser.bestStreak) {
     await prisma.user.update({
@@ -119,15 +119,18 @@ export async function completeChallenge(userId, proofImageUrl = null, proofText 
       data: { bestStreak: updatedUser.currentStreak },
     });
   }
-
+ 
   return {
     xpEarned,
     newStreak: updatedUser.currentStreak,
     newBestStreak: Math.max(updatedUser.currentStreak, updatedUser.bestStreak),
     newXP: updatedUser.totalXp,
+    // Challenge metadata for Claude reaction
+    challengeTitle: userChallenge.customTitle ?? userChallenge.challenge?.title ?? null,
+    challengeDifficulty: userChallenge.challenge?.difficulty ?? 'medium',
+    challengeCategory: userChallenge.challenge?.category ?? 'general',
   };
 }
-
 /**
  * Check and handle missed days — call on every dashboard load
  */
@@ -337,5 +340,37 @@ function flattenUserChallenge(uc) {
     xpReward: uc.challenge?.xpReward ?? uc.xpEarned,
     estimatedMinutes: uc.challenge?.estimatedMinutes ?? 30,
     isOutdoor: uc.challenge?.isOutdoor ?? false,
+  };
+}
+
+export async function getUserChallengeMeta(userId) {
+  const today = toDateOnly();
+ 
+  const userChallenge = await prisma.userChallenge.findUnique({
+    where: { userId_challengeDate: { userId, challengeDate: today } },
+    include: {
+      challenge: {
+        select: { title: true, difficulty: true, category: true },
+      },
+    },
+  });
+ 
+  if (!userChallenge) return null;
+ 
+  // Already completed — don't allow re-completion
+  if (userChallenge.status === 'completed' || userChallenge.status === 'restored') {
+    return null;
+  }
+ 
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { currentStreak: true },
+  });
+ 
+  return {
+    title: userChallenge.customTitle ?? userChallenge.challenge?.title ?? 'Challenge',
+    difficulty: userChallenge.challenge?.difficulty ?? 'medium',
+    category: userChallenge.challenge?.category ?? 'general',
+    currentStreak: user?.currentStreak ?? 0,
   };
 }
